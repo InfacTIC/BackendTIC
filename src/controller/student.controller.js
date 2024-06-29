@@ -75,46 +75,53 @@ export const deleteStudent = async (req, res) => {
 }
 
 export const updateStudent = async (req, res) => {
-    try {
-      const { nombre, apellido, telefono} = req.body;
-      const userId = req.params.id;
-  
-      let updatedFields = { nombre, apellido, telefono };
-  
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: 'Usuario no encontrado' });
-      }
-  
+  try {
+    const { nombre, apellido, telefono } = req.body;
+    const userId = req.params.id;
 
-      
-      if (req.files && req.files.image) {
-          console.log("Entre");
-        // Elimina la imagen antigua si existe
-        if (user.image && user.image.public_id) {
-          await deleteImage(user.image.public_id);
-        }
-      let image
-        // Sube la nueva imagen
-        const result = await uploadImage(req.files.image.tempFilePath)
-        await fs.remove(req.files.image.tempFilePath)
-        image = {
-            url: result.secure_url,
-            public_id: result.public_id
-        }
+    let updatedFields = { nombre, apellido, telefono };
 
+    const user = await User.findById(userId);
 
-        updatedFields = { ...updatedFields, image };
-      }
-  
-      console.log(updatedFields);
-      const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, { new: true });
-  
-      res.json(updatedUser);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
-  };
+
+    if (!req.files) {
+      // Actualiza sin cambiar la imagen
+      await User.findByIdAndUpdate(userId, updatedFields);
+    } else {
+      console.log("Imagen recibida:", req.files);
+
+      // Elimina la imagen antigua si existe
+      if (user.image && user.image.public_id) {
+        await deleteImage(user.image.public_id);
+      }
+
+      // Sube la nueva imagen
+      const result = await uploadImage(req.files.image.tempFilePath)
+            await fs.remove(req.files.image.tempFilePath)
+      const image = {
+        url: result.secure_url,
+        public_id: result.public_id
+      };
+
+      // Mostrar la URL de la nueva imagen
+      console.log("URL de la nueva imagen:", image.url);
+
+      updatedFields = { ...updatedFields, image };
+
+      // Actualizar el usuario con la nueva imagen
+      await User.findByIdAndUpdate(userId, updatedFields);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updatedFields, { new: true });
+
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 
 
