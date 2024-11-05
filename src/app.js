@@ -13,17 +13,10 @@ import docenteRoutes from './routes/docente.routes.js';
 
 const app = express();
 
-
-const allowedOrigins = [
-    "https://misiontic.netlify.app",
-  ];
-  
-  app.use(
-    cors({
-      origin: allowedOrigins,
-      credentials: true,
-    })
-  );
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+}));
 
 app.use(morgan('dev'));
 app.use(express.json());
